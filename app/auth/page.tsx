@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
+type AuthView = "login" | "register" | "forgot";
+
 export default function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [view, setView] = useState<AuthView>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
@@ -15,15 +17,18 @@ export default function AuthPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const clearMessages = () => {
     setError(null);
     setSuccess(null);
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearMessages();
     setLoading(true);
 
     try {
-      if (isLogin) {
-        // Login
+      if (view === "login") {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -43,7 +48,6 @@ export default function AuthPage() {
         });
         if (error) throw error;
 
-        // Create profile entry
         if (data.user) {
           await supabase.from("profiles").upsert({
             id: data.user.id,
@@ -54,10 +58,34 @@ export default function AuthPage() {
         setSuccess(
           "Account created! Check your email for confirmation, or log in if email confirmation is disabled."
         );
-        setIsLogin(true);
+        setView("login");
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Something went wrong";
+      const message =
+        err instanceof Error ? err.message : "Something went wrong";
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearMessages();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      if (error) throw error;
+
+      setSuccess(
+        "Password reset link sent! Check your email inbox (and spam folder) for a link to reset your password."
+      );
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Something went wrong";
       setError(message);
     } finally {
       setLoading(false);
@@ -65,7 +93,7 @@ export default function AuthPage() {
   };
 
   const handleGoogleLogin = async () => {
-    setError(null);
+    clearMessages();
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -73,6 +101,87 @@ export default function AuthPage() {
       },
     });
   };
+
+  // Forgot Password View
+  if (view === "forgot") {
+    return (
+      <div className="auth-page">
+        <div className="container">
+          <div className="row justify-content-center">
+            <div className="col-md-5">
+              <div className="auth-card-dark">
+                {/* Logo */}
+                <div className="text-center mb-4">
+                  <Link href="/" className="text-decoration-none">
+                    <h2 className="auth-logo">🎧 EARSTOPEERS</h2>
+                  </Link>
+                  <p className="text-secondary">
+                    Enter your email and we&apos;ll send you a link to reset
+                    your password.
+                  </p>
+                </div>
+
+                {/* Error / Success */}
+                {error && (
+                  <div className="alert alert-danger py-2 mb-3">{error}</div>
+                )}
+                {success && (
+                  <div className="alert alert-success py-2 mb-3">{success}</div>
+                )}
+
+                {/* Reset Form */}
+                <form onSubmit={handleForgotPassword}>
+                  <div className="mb-3">
+                    <label className="form-label text-secondary">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      className="form-control auth-input"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-warning w-100 mb-3"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" />
+                        Sending reset link...
+                      </>
+                    ) : (
+                      "Send Reset Link"
+                    )}
+                  </button>
+                </form>
+
+                {/* Back to login */}
+                <div className="text-center">
+                  <button
+                    className="btn btn-link forgot-password-link"
+                    onClick={() => {
+                      setView("login");
+                      clearMessages();
+                    }}
+                  >
+                    ← Back to Sign In
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isLogin = view === "login";
 
   return (
     <div className="auth-page">
@@ -97,9 +206,8 @@ export default function AuthPage() {
                 <button
                   className={`auth-toggle-btn ${isLogin ? "active" : ""}`}
                   onClick={() => {
-                    setIsLogin(true);
-                    setError(null);
-                    setSuccess(null);
+                    setView("login");
+                    clearMessages();
                   }}
                 >
                   Sign In
@@ -107,9 +215,8 @@ export default function AuthPage() {
                 <button
                   className={`auth-toggle-btn ${!isLogin ? "active" : ""}`}
                   onClick={() => {
-                    setIsLogin(false);
-                    setError(null);
-                    setSuccess(null);
+                    setView("register");
+                    clearMessages();
                   }}
                 >
                   Register
@@ -128,7 +235,9 @@ export default function AuthPage() {
               <form onSubmit={handleEmailAuth}>
                 {!isLogin && (
                   <div className="mb-3">
-                    <label className="form-label text-secondary">Username</label>
+                    <label className="form-label text-secondary">
+                      Username
+                    </label>
                     <input
                       type="text"
                       className="form-control auth-input"
@@ -164,6 +273,22 @@ export default function AuthPage() {
                     minLength={6}
                   />
                 </div>
+
+                {/* Forgot Password Link */}
+                {isLogin && (
+                  <div className="text-end mb-3">
+                    <button
+                      type="button"
+                      className="btn btn-link forgot-password-link p-0"
+                      onClick={() => {
+                        setView("forgot");
+                        clearMessages();
+                      }}
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
 
                 <button
                   type="submit"
