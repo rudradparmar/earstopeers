@@ -1,9 +1,13 @@
 // app/details/[type]/[id]/page.tsx
-// app/details/[type]/[id]/page.tsx
 
 import { getDetails } from "@/lib/api";
+import ReviewSection from "@/components/reviews/ReviewSection";
 
-export default async function DetailsPage({ params }) {
+export default async function DetailsPage({
+  params,
+}: {
+  params: Promise<{ id: string; type: string }>;
+}) {
   const { id, type } = await params;
 
   const data = await getDetails(id, type);
@@ -24,10 +28,12 @@ export default async function DetailsPage({ params }) {
   const rating = data.vote_average?.toFixed(1);
 
   const trailer = data.videos?.results?.find(
-    (vid) => vid.type === "Trailer" && vid.site === "YouTube"
+    (vid: { type: string; site: string; key: string }) =>
+      vid.type === "Trailer" && vid.site === "YouTube"
   );
 
-  const cast = data.credits?.cast?.slice(0, 5) || [];
+  const cast: { id: number; name: string; profile_path: string | null }[] =
+    data.credits?.cast?.slice(0, 5) || [];
 
   return (
     <div className="text-white">
@@ -98,66 +104,11 @@ export default async function DetailsPage({ params }) {
           )}
         </div>
       </div>
-    </div>
-  );
-}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*import { getDetails } from "@/lib/api";
-
-export default async function DetailsPage({ params }) {
-  const { id, type } = await params;
-  const data = await getDetails(id, type);
-
-  if (!data) {
-    return <div className="p-6">Failed to load</div>;
-  }
-
-  const title = data.title || data.name;
-
-  return (
-    <div className="p-6">
-      <div
-        className="w-full h-64 bg-cover bg-center rounded-xl mb-6"
-        style={{
-          backgroundImage: `url(https://image.tmdb.org/t/p/original${data.backdrop_path})`,
-        }}
-      />
-
-      <div className="flex gap-6">
-        <img
-          src={`https://image.tmdb.org/t/p/w500${data.poster_path}`}
-          className="w-48 rounded-xl"
-        />
-
-        <div>
-          <h1 className="text-3xl font-bold mb-2">{title}</h1>
-          <p className="text-yellow-400 mb-2">
-            ⭐ {data.vote_average?.toFixed(1)}
-          </p>
-          <p className="text-gray-300 max-w-xl">{data.overview}</p>
-        </div>
+      {/* 💬 REVIEWS SECTION */}
+      <div className="container py-4">
+        <ReviewSection contentId={id} contentType={type} />
       </div>
     </div>
   );
-}*/
+}

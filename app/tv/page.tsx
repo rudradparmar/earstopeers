@@ -1,23 +1,17 @@
-import {
-  getPopularMovies,
-  getTopRated,
-  getNowPlaying,
-} from "@/lib/api";
+import { getPopularTV, getTopRatedTV } from "@/lib/api";
 import ContentCard from "@/components/ContentCard";
 
 export const metadata = {
-  title: "Movies — EARSTOPEERS",
-  description: "Browse popular, top rated, and now playing movies.",
+  title: "TV Shows — EARSTOPEERS",
+  description: "Browse popular and top rated TV shows.",
 };
 
-export default async function MoviesPage() {
-  const [popular, topRated, nowPlaying] = await Promise.all([
-    getPopularMovies(),
-    getTopRated(),
-    getNowPlaying(),
+export default async function TVPage() {
+  const [popular, topRated] = await Promise.all([
+    getPopularTV(),
+    getTopRatedTV(),
   ]);
 
-  // Use the first popular movie as a banner backdrop
   const hero = popular[0];
   const heroBackdrop = hero?.backdrop_path
     ? `https://image.tmdb.org/t/p/original${hero.backdrop_path}`
@@ -33,9 +27,9 @@ export default async function MoviesPage() {
         >
           <div className="category-hero-overlay">
             <div className="container">
-              <h1 className="display-4 fw-bold">🎬 Movies</h1>
+              <h1 className="display-4 fw-bold">📺 TV Shows</h1>
               <p className="lead">
-                Discover the latest and greatest films from around the world.
+                Binge-worthy series from every genre.
               </p>
             </div>
           </div>
@@ -43,25 +37,13 @@ export default async function MoviesPage() {
       )}
 
       <main className="container py-5">
-        {/* Now Playing */}
-        <section className="mb-5">
-          <h2 className="section-title">🎞️ Now Playing</h2>
-          <div className="row">
-            {nowPlaying.slice(0, 8).map((item) => (
-              <div className="col-6 col-md-3 mb-4" key={item.id}>
-                <ContentCard item={{ ...item, media_type: "movie" }} />
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* Popular */}
         <section className="mb-5">
-          <h2 className="section-title">🔥 Popular</h2>
+          <h2 className="section-title">🔥 Popular TV Shows</h2>
           <div className="row">
             {popular.slice(0, 12).map((item) => (
               <div className="col-6 col-md-3 mb-4" key={item.id}>
-                <ContentCard item={{ ...item, media_type: "movie" }} />
+                <ContentCard item={{ ...item, media_type: "tv" }} />
               </div>
             ))}
           </div>
@@ -73,7 +55,7 @@ export default async function MoviesPage() {
           <div className="row">
             {topRated.slice(0, 12).map((item) => (
               <div className="col-6 col-md-3 mb-4" key={item.id}>
-                <ContentCard item={{ ...item, media_type: "movie" }} />
+                <ContentCard item={{ ...item, media_type: "tv" }} />
               </div>
             ))}
           </div>

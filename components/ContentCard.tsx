@@ -1,11 +1,14 @@
-// src/components/cards/ContentCard.tsx
-
 "use client";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import type { TMDBItem } from "@/types";
 
-export default function ContentCard({ item }) {
+interface ContentCardProps {
+  item: TMDBItem;
+}
+
+export default function ContentCard({ item }: ContentCardProps) {
   const router = useRouter();
 
   const handleClick = () => {
@@ -22,9 +25,9 @@ export default function ContentCard({ item }) {
             ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
             : "/placeholder.png"
         }
-        alt={item.title || item.name}
-        width={300}   // ✅ REQUIRED
-        height={450}  // ✅ REQUIRED
+        alt={item.title || item.name || "Content"}
+        width={300}
+        height={450}
         className="rounded"
       />
 
@@ -32,41 +35,3 @@ export default function ContentCard({ item }) {
     </div>
   );
 }
-
-/*
-import { ContentItem } from "@/types";
-
-interface Props {
-  item: ContentItem;
-  onClick?: (id: number) => void;
-}
-
-export default function ContentCard({ item, onClick }: Props) {
-  return (
-    <div
-      onClick={() => onClick?.(item.id)}
-      className="relative cursor-pointer rounded-xl overflow-hidden bg-gray-900 hover:scale-105 transition-transform"
-    >
-      {/* Image *}
-      <img
-        src={item.image}
-        alt={item.title}
-        className="w-full h-64 object-cover"
-      />
-
-      {/* Rating badge /}
-      {item.rating && (
-        <div className="absolute top-2 right-2 bg-black/70 text-yellow-400 text-xs px-2 py-1 rounded">
-          ⭐ {item.rating}
-        </div>
-      )}
-
-      {/* Overlay *}
-      <div className="absolute bottom-0 w-full bg-gradient-to-t from-black/90 to-transparent p-3">
-        <h3 className="text-sm font-semibold">{item.title}</h3>
-        {item.year && <p className="text-xs text-gray-300">{item.year}</p>}
-      </div>
-    </div>
-  );
-}
-*/

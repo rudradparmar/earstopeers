@@ -26,6 +26,12 @@ const categories = [
     color: "text-warning",
   },
   {
+    name: "Books",
+    icon: "📚",
+    href: "/books",
+    color: "text-light",
+  },
+  {
     name: "Tech",
     icon: "💻",
     href: "/tech",
