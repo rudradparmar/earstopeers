@@ -61,6 +61,22 @@ export async function getUpcomingGames(): Promise<RawgGame[]> {
   }
 }
 
+export async function searchGames(query: string): Promise<RawgGame[]> {
+  try {
+    ensureEnv();
+    const res = await fetch(
+      `${BASE_URL}/games?key=${API_KEY}&search=${encodeURIComponent(query)}&page_size=12`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) throw new Error(`RAWG search failed: ${res.status}`);
+    const data = await res.json();
+    return data.results || [];
+  } catch (err) {
+    console.error("RAWG SEARCH ERROR:", err);
+    return [];
+  }
+}
+
 export async function getGameDetails(id: string): Promise<RawgGame | null> {
   try {
     ensureEnv();
