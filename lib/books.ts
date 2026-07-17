@@ -35,19 +35,28 @@ export function stripHtml(html?: string): string {
   return html ? html.replace(/<[^>]+>/g, "") : "";
 }
 
+async function fetchVolumes(url: string): Promise<BookVolume[]> {
+  const res = await fetch(url, { next: { revalidate: 3600 } });
+  if (!res.ok) throw new Error(`Google Books failed: ${res.status}`);
+  const data = await res.json();
+  const items: BookVolume[] = data.items || [];
+  // skip volumes without a cover so cards aren't blank
+  return items.filter((b) => b.volumeInfo?.imageLinks?.thumbnail);
+}
+
+// results are cached for an hour via revalidate, so a single transient
+// failure (e.g. a momentary rate limit) would otherwise stay wrong that long
 async function searchVolumes(query: string, maxResults: number): Promise<BookVolume[]> {
+  const url = withKey(
+    `${BASE_URL}/volumes?q=${encodeURIComponent(query)}&orderBy=relevance&maxResults=${maxResults}&printType=books&langRestrict=en`
+  );
   try {
-    const res = await fetch(
-      withKey(
-        `${BASE_URL}/volumes?q=${encodeURIComponent(query)}&orderBy=relevance&maxResults=${maxResults}&printType=books&langRestrict=en`
-      ),
-      { next: { revalidate: 3600 } }
-    );
-    if (!res.ok) throw new Error(`Google Books failed: ${res.status}`);
-    const data = await res.json();
-    const items: BookVolume[] = data.items || [];
-    // skip volumes without a cover so cards aren't blank
-    return items.filter((b) => b.volumeInfo?.imageLinks?.thumbnail);
+    return await fetchVolumes(url);
+  } catch (err) {
+    console.error("BOOKS ERROR, retrying once:", err);
+  }
+  try {
+    return await fetchVolumes(url);
   } catch (err) {
     console.error("BOOKS ERROR:", err);
     return [];
