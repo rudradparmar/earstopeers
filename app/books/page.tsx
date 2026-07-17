@@ -1,12 +1,67 @@
-import { featuredBooks, classicBooks } from "@/lib/mockBooks";
 import Image from "next/image";
+import Link from "next/link";
+import { getTopBooks, getClassicBooks, secureImage, stripHtml, type BookVolume } from "@/lib/books";
 
 export const metadata = {
   title: "Books — EARSTOPEERS",
   description: "Discover top-rated books, from sci-fi epics to timeless classics.",
 };
 
-export default function BooksPage() {
+function BookCard({ book }: { book: BookVolume }) {
+  const info = book.volumeInfo;
+  const cover = secureImage(info.imageLinks?.thumbnail);
+
+  return (
+    <div className="col-6 col-md-3 mb-4">
+      <Link href={`/books/${book.id}`} className="text-decoration-none text-white">
+        <div className="book-card">
+          <div className="book-card-img-wrapper">
+            {cover && (
+              <Image
+                src={cover}
+                alt={info.title}
+                width={300}
+                height={400}
+                className="book-card-img"
+                unoptimized
+              />
+            )}
+            {info.averageRating && (
+              <span className="game-rating-badge">⭐ {info.averageRating}</span>
+            )}
+          </div>
+          <div className="book-card-body">
+            <h5 className="book-card-title">{info.title}</h5>
+            <p className="book-card-author">
+              by {info.authors?.join(", ") || "Unknown"}
+            </p>
+            <div className="book-card-meta">
+              {info.categories?.[0] && (
+                <span className="badge bg-warning text-dark me-1">
+                  {info.categories[0]}
+                </span>
+              )}
+              <span className="text-secondary small">
+                {info.pageCount ? `${info.pageCount} pages · ` : ""}
+                {info.publishedDate?.slice(0, 4) || ""}
+              </span>
+            </div>
+            <p className="book-card-desc">
+              {stripHtml(info.description).slice(0, 120)}
+            </p>
+          </div>
+        </div>
+      </Link>
+    </div>
+  );
+}
+
+export default async function BooksPage() {
+  const [topPicks, classics] = await Promise.all([
+    getTopBooks(),
+    getClassicBooks(),
+  ]);
+
   return (
     <div className="text-white">
       {/* Hero Banner */}
@@ -27,33 +82,14 @@ export default function BooksPage() {
         {/* Featured Books */}
         <section className="mb-5">
           <h2 className="section-title">⭐ Top Picks</h2>
+          {topPicks.length === 0 && (
+            <p className="text-secondary">
+              Couldn&apos;t load books right now. Please try again later.
+            </p>
+          )}
           <div className="row">
-            {featuredBooks.map((book) => (
-              <div className="col-6 col-md-3 mb-4" key={book.id}>
-                <div className="book-card">
-                  <div className="book-card-img-wrapper">
-                    <Image
-                      src={book.image}
-                      alt={book.title}
-                      width={300}
-                      height={400}
-                      className="book-card-img"
-                    />
-                    <span className="game-rating-badge">
-                      ⭐ {book.rating}
-                    </span>
-                  </div>
-                  <div className="book-card-body">
-                    <h5 className="book-card-title">{book.title}</h5>
-                    <p className="book-card-author">by {book.author}</p>
-                    <div className="book-card-meta">
-                      <span className="badge bg-warning text-dark me-1">{book.genre}</span>
-                      <span className="text-secondary small">{book.pages} pages · {book.year}</span>
-                    </div>
-                    <p className="book-card-desc">{book.description}</p>
-                  </div>
-                </div>
-              </div>
+            {topPicks.map((book) => (
+              <BookCard book={book} key={book.id} />
             ))}
           </div>
         </section>
@@ -61,33 +97,14 @@ export default function BooksPage() {
         {/* Classics */}
         <section className="mb-5">
           <h2 className="section-title">📖 Timeless Classics</h2>
+          {classics.length === 0 && (
+            <p className="text-secondary">
+              Couldn&apos;t load books right now. Please try again later.
+            </p>
+          )}
           <div className="row">
-            {classicBooks.map((book) => (
-              <div className="col-6 col-md-3 mb-4" key={book.id}>
-                <div className="book-card">
-                  <div className="book-card-img-wrapper">
-                    <Image
-                      src={book.image}
-                      alt={book.title}
-                      width={300}
-                      height={400}
-                      className="book-card-img"
-                    />
-                    <span className="game-rating-badge">
-                      ⭐ {book.rating}
-                    </span>
-                  </div>
-                  <div className="book-card-body">
-                    <h5 className="book-card-title">{book.title}</h5>
-                    <p className="book-card-author">by {book.author}</p>
-                    <div className="book-card-meta">
-                      <span className="badge bg-warning text-dark me-1">{book.genre}</span>
-                      <span className="text-secondary small">{book.pages} pages · {book.year}</span>
-                    </div>
-                    <p className="book-card-desc">{book.description}</p>
-                  </div>
-                </div>
-              </div>
+            {classics.map((book) => (
+              <BookCard book={book} key={book.id} />
             ))}
           </div>
         </section>

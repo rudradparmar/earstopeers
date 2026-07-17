@@ -1,12 +1,18 @@
-import { featuredGames, upcomingGames } from "@/lib/mockGames";
 import Image from "next/image";
+import Link from "next/link";
+import { getTopRatedGames, getUpcomingGames } from "@/lib/games";
 
 export const metadata = {
   title: "Games — EARSTOPEERS",
   description: "Explore top-rated and upcoming video games.",
 };
 
-export default function GamesPage() {
+export default async function GamesPage() {
+  const [topRated, upcoming] = await Promise.all([
+    getTopRatedGames(),
+    getUpcomingGames(),
+  ]);
+
   return (
     <div className="text-white">
       {/* Hero Banner */}
@@ -27,32 +33,54 @@ export default function GamesPage() {
         {/* Featured / Top Rated */}
         <section className="mb-5">
           <h2 className="section-title">🏆 Top Rated</h2>
+          {topRated.length === 0 && (
+            <p className="text-secondary">
+              Couldn&apos;t load games right now. Please try again later.
+            </p>
+          )}
           <div className="row">
-            {featuredGames.map((game) => (
+            {topRated.map((game) => (
               <div className="col-6 col-md-3 mb-4" key={game.id}>
-                <div className="game-card">
-                  <div className="game-card-img-wrapper">
-                    <Image
-                      src={game.image}
-                      alt={game.title}
-                      width={300}
-                      height={400}
-                      className="game-card-img"
-                    />
-                    <span className="game-rating-badge">
-                      ⭐ {game.rating}
-                    </span>
-                    <div className="game-card-overlay">
-                      <span className="badge bg-warning text-dark me-1">{game.genre}</span>
-                      <span className="badge bg-secondary">{game.platform}</span>
+                <Link
+                  href={`/games/${game.id}`}
+                  className="text-decoration-none text-white"
+                >
+                  <div className="game-card">
+                    <div className="game-card-img-wrapper">
+                      {game.background_image && (
+                        <Image
+                          src={game.background_image}
+                          alt={game.name}
+                          width={300}
+                          height={400}
+                          className="game-card-img"
+                        />
+                      )}
+                      <span className="game-rating-badge">
+                        ⭐ {game.rating?.toFixed(1)}
+                      </span>
+                      <div className="game-card-overlay">
+                        {game.genres?.[0] && (
+                          <span className="badge bg-warning text-dark me-1">
+                            {game.genres[0].name}
+                          </span>
+                        )}
+                        {game.platforms?.[0] && (
+                          <span className="badge bg-secondary">
+                            {game.platforms[0].platform.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="game-card-body">
+                      <h5 className="game-card-title">{game.name}</h5>
+                      <p className="game-card-dev">
+                        {game.released?.slice(0, 4) || "TBA"}
+                        {game.metacritic ? ` · Metacritic ${game.metacritic}` : ""}
+                      </p>
                     </div>
                   </div>
-                  <div className="game-card-body">
-                    <h5 className="game-card-title">{game.title}</h5>
-                    <p className="game-card-dev">{game.developer} · {game.releaseYear}</p>
-                    <p className="game-card-desc">{game.description}</p>
-                  </div>
-                </div>
+                </Link>
               </div>
             ))}
           </div>
@@ -61,26 +89,41 @@ export default function GamesPage() {
         {/* Upcoming */}
         <section className="mb-5">
           <h2 className="section-title">📅 Upcoming Releases</h2>
+          {upcoming.length === 0 && (
+            <p className="text-secondary">
+              Couldn&apos;t load upcoming games right now. Please try again later.
+            </p>
+          )}
           <div className="row">
-            {upcomingGames.map((game) => (
+            {upcoming.map((game) => (
               <div className="col-6 col-md-3 mb-4" key={game.id}>
-                <div className="game-card upcoming">
-                  <div className="game-card-img-wrapper">
-                    <Image
-                      src={game.image}
-                      alt={game.title}
-                      width={300}
-                      height={400}
-                      className="game-card-img"
-                    />
-                    <span className="game-upcoming-badge">Coming {game.releaseYear}</span>
+                <Link
+                  href={`/games/${game.id}`}
+                  className="text-decoration-none text-white"
+                >
+                  <div className="game-card upcoming">
+                    <div className="game-card-img-wrapper">
+                      {game.background_image && (
+                        <Image
+                          src={game.background_image}
+                          alt={game.name}
+                          width={300}
+                          height={400}
+                          className="game-card-img"
+                        />
+                      )}
+                      <span className="game-upcoming-badge">
+                        Coming {game.released?.slice(0, 4) || "soon"}
+                      </span>
+                    </div>
+                    <div className="game-card-body">
+                      <h5 className="game-card-title">{game.name}</h5>
+                      <p className="game-card-dev">
+                        {game.platforms?.[0]?.platform.name || ""}
+                      </p>
+                    </div>
                   </div>
-                  <div className="game-card-body">
-                    <h5 className="game-card-title">{game.title}</h5>
-                    <p className="game-card-dev">{game.developer} · {game.platform}</p>
-                    <p className="game-card-desc">{game.description}</p>
-                  </div>
-                </div>
+                </Link>
               </div>
             ))}
           </div>
